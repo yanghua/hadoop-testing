@@ -53,6 +53,13 @@ services:
     depends_on:
       - hadoop-master1
 
+  submit-client:
+    image: hadoop-testing/submit-client:${PROJECT_VERSION}
+    hostname: submit-client.orb.local
+    container_name: submit-client
+    depends_on:
+      - hadoop-master1
+
 {% if prometheus_include %}
   prometheus:
     image: prom/prometheus

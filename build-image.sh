@@ -95,7 +95,7 @@ function build_hadoop_master_image() {
   rm -rf hadoop-master${INDEX}/download/*
 }
 
-build_hadoop_master_image 1 "$@"
+#build_hadoop_master_image 1 "$@"
 
 function build_hadoop_worker_image() {
   local INDEX=$1
@@ -109,6 +109,7 @@ function build_hadoop_worker_image() {
     --build-arg PROJECT_VERSION=${PROJECT_VERSION} \
     --build-arg HADOOP_VERSION=${HADOOP_VERSION} \
     --build-arg SPARK_VERSION=${SPARK_VERSION} \
+    --build-arg KYUUBI_VERSION=${KYUUBI_VERSION} \
     --build-arg TRINO_VERSION=${TRINO_VERSION} \
     --file "${SELF_DIR}/hadoop-worker${INDEX}/Dockerfile" \
     --tag hadoop-testing/hadoop-worker${INDEX}:${PROJECT_VERSION} \
@@ -117,6 +118,26 @@ function build_hadoop_worker_image() {
   rm -rf hadoop-worker${INDEX}/download/*
 }
 
-build_hadoop_worker_image 1 "$@"
-build_hadoop_worker_image 2 "$@"
-build_hadoop_worker_image 3 "$@"
+function build_submit_client() {
+  mkdir -p submit-client/download
+  if [ $(uname -m) = "arm64" ] || [ $(uname -m) = "aarch64" ]; then HADOOP_TAR_NAME=hadoop-${HADOOP_VERSION}-aarch64; else HADOOP_TAR_NAME=hadoop-${HADOOP_VERSION}; fi
+  cp download/${HADOOP_TAR_NAME}.tar.gz submit-client/download/hadoop-${HADOOP_VERSION}.tar.gz
+  cp download/apache-kyuubi-${KYUUBI_VERSION}-bin.tgz submit-client/download/apache-kyuubi-${KYUUBI_VERSION}-bin.tgz
+  cp download/spark-${SPARK_VERSION}-bin-hadoop3.tgz submit-client/download/spark-${SPARK_VERSION}-bin-hadoop3.tgz
+  ${BUILD_CMD} \
+    --build-arg PROJECT_VERSION=${PROJECT_VERSION} \
+    --build-arg HADOOP_VERSION=${HADOOP_VERSION} \
+    --build-arg SPARK_VERSION=${SPARK_VERSION} \
+    --build-arg KYUUBI_VERSION=${KYUUBI_VERSION} \
+    --file "${SELF_DIR}/submit-client/Dockerfile" \
+    --tag hadoop-testing/submit-client:${PROJECT_VERSION} \
+    "${SELF_DIR}/submit-client"
+
+  rm -rf submit-client/download/*
+}
+
+#build_hadoop_worker_image 1 "$@"
+#build_hadoop_worker_image 2 "$@"
+#build_hadoop_worker_image 3 "$@"
+
+build_submit_client
